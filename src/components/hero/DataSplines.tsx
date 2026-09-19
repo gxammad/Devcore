@@ -11,30 +11,31 @@ interface DataSplinesProps {
 export function DataSplines({ scrollProgress }: DataSplinesProps) {
   const linesRef = useRef<THREE.Group>(null);
 
-  // Generate 5 distinct data curves connecting center to outer perimeter
+  // Generate 6 thin, elegant spline paths weaving through terrain fissures
   const curves = useMemo(() => {
     const items: THREE.CatmullRomCurve3[] = [];
-    const endpoints = [
-      new THREE.Vector3(-4.5, -1.2, -3),
-      new THREE.Vector3(4.2, -1.0, -2.5),
-      new THREE.Vector3(-3.2, -1.4, 2.5),
-      new THREE.Vector3(3.8, -1.1, 3.2),
-      new THREE.Vector3(0.5, -1.5, -5.2),
+    const targets = [
+      new THREE.Vector3(-5.2, -1.8, -4.0),
+      new THREE.Vector3(5.0, -1.6, -3.8),
+      new THREE.Vector3(-3.8, -2.0, 1.5),
+      new THREE.Vector3(4.2, -1.8, 2.2),
+      new THREE.Vector3(-1.5, -2.1, -6.5),
+      new THREE.Vector3(2.0, -1.9, -6.2),
     ];
 
-    endpoints.forEach((end, idx) => {
+    targets.forEach((end, idx) => {
       const mid1 = new THREE.Vector3(
-        end.x * 0.35 + (idx % 2 === 0 ? 1 : -1) * 0.8,
-        -0.4,
+        end.x * 0.35 + (idx % 2 === 0 ? 0.6 : -0.6),
+        -0.8,
         end.z * 0.35
       );
       const mid2 = new THREE.Vector3(
-        end.x * 0.75 + (idx % 2 === 0 ? -0.5 : 0.5),
-        -1.0,
+        end.x * 0.75 + (idx % 2 === 0 ? -0.4 : 0.4),
+        -1.5,
         end.z * 0.75
       );
       const curve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(0, 0.2, 0),
+        new THREE.Vector3(0, 0.3, 0),
         mid1,
         mid2,
         end,
@@ -47,7 +48,7 @@ export function DataSplines({ scrollProgress }: DataSplinesProps) {
 
   const lineGeometries = useMemo(() => {
     return curves.map((curve) => {
-      const points = curve.getPoints(64);
+      const points = curve.getPoints(72);
       return new THREE.BufferGeometry().setFromPoints(points);
     });
   }, [curves]);
@@ -57,13 +58,16 @@ export function DataSplines({ scrollProgress }: DataSplinesProps) {
     const t = clock.getElapsedTime();
     const p = scrollProgress.current;
 
-    // Modulate opacity and subtle wave
+    // At 0%: subtle resting state (opacity 0.05).
+    // As scroll advances: illuminates organically as connection is established.
+    const scrollFactor = Math.min(1, Math.max(0, (p - 0.15) / 0.5));
+
     linesRef.current.children.forEach((child, i) => {
       const line = child as THREE.Line;
       const mat = line.material as THREE.LineBasicMaterial;
       if (mat) {
-        // Pulse with time and scroll
-        mat.opacity = 0.25 + Math.sin(t * 2.5 + i * 1.2) * 0.15 + p * 0.3;
+        const pulse = 0.05 + scrollFactor * (0.22 + Math.sin(t * 2.0 + i * 1.5) * 0.08);
+        mat.opacity = pulse;
       }
     });
   });
@@ -79,8 +83,8 @@ export function DataSplines({ scrollProgress }: DataSplinesProps) {
               new THREE.LineBasicMaterial({
                 color: new THREE.Color('#00F299'),
                 transparent: true,
-                opacity: 0.35,
-                linewidth: 1.5,
+                opacity: 0.05,
+                linewidth: 1,
               })
             )
           }

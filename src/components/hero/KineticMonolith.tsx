@@ -11,7 +11,8 @@ interface KineticMonolithProps {
 
 export function KineticMonolith({ scrollProgress, mousePos }: KineticMonolithProps) {
   const groupRef = useRef<THREE.Group>(null);
-  const ribbonRef = useRef<THREE.Mesh>(null);
+  const primaryRingRef = useRef<THREE.Mesh>(null);
+  const secondaryRingRef = useRef<THREE.Mesh>(null);
   const sphereRef = useRef<THREE.Mesh>(null);
   const coreRef = useRef<THREE.Mesh>(null);
 
@@ -20,85 +21,92 @@ export function KineticMonolith({ scrollProgress, mousePos }: KineticMonolithPro
     const p = scrollProgress.current;
 
     if (groupRef.current) {
-      // Parallax response to mouse
-      const targetRotY = mousePos.current.x * 0.25 + p * 0.4;
-      const targetRotX = mousePos.current.y * 0.15;
-      groupRef.current.rotation.y += (targetRotY - groupRef.current.rotation.y) * 0.05;
-      groupRef.current.rotation.x += (targetRotX - groupRef.current.rotation.x) * 0.05;
+      // Precise, restrained mouse parallax
+      const targetRotY = mousePos.current.x * 0.18 + p * 0.35;
+      const targetRotX = mousePos.current.y * 0.10;
+      groupRef.current.rotation.y += (targetRotY - groupRef.current.rotation.y) * 0.04;
+      groupRef.current.rotation.x += (targetRotX - groupRef.current.rotation.x) * 0.04;
 
-      // Gentle floating elevation
-      groupRef.current.position.y = 0.4 + Math.sin(t * 1.2) * 0.08 - p * 0.8;
-      // Recede as camera approaches
-      groupRef.current.position.z = -p * 2.2;
+      // Heavy, slow architectural hover
+      groupRef.current.position.y = 0.5 + Math.sin(t * 0.8) * 0.05 - p * 0.9;
+      groupRef.current.position.z = -p * 3.2;
     }
 
-    if (ribbonRef.current) {
-      // Subtle continuous structural rotation
-      ribbonRef.current.rotation.z = t * 0.15 + p * 0.5;
+    if (primaryRingRef.current) {
+      // Primary architectural ribbon rotation
+      primaryRingRef.current.rotation.z = t * 0.10 + p * 0.4;
+    }
+
+    if (secondaryRingRef.current) {
+      // Counter-rotating inner gimbal track
+      secondaryRingRef.current.rotation.x = -t * 0.08 - p * 0.3;
+      secondaryRingRef.current.rotation.y = t * 0.12;
     }
 
     if (sphereRef.current) {
-      // Kinetic sphere orbiting along the ribbon path
-      const angle = t * 1.8 + p * 4.0;
-      const radius = 1.45;
+      // Kinetic sphere gliding smoothly along ribbon trajectory
+      const angle = t * 1.4 + p * 3.5;
+      const radius = 1.55;
       sphereRef.current.position.x = Math.cos(angle) * radius;
-      sphereRef.current.position.y = Math.sin(angle * 2) * 0.35;
+      sphereRef.current.position.y = Math.sin(angle * 2) * 0.28;
       sphereRef.current.position.z = Math.sin(angle) * radius;
     }
 
     if (coreRef.current) {
-      // Inner glowing core pulse
-      const pulse = 0.9 + Math.sin(t * 3.0) * 0.12;
+      // Restrained breathing pulse of inner crystalline core
+      const pulse = 0.92 + Math.sin(t * 2.2) * 0.06;
       coreRef.current.scale.set(pulse, pulse, pulse);
+      coreRef.current.rotation.y = t * 0.25;
+      coreRef.current.rotation.x = t * 0.18;
     }
   });
 
   return (
-    <group ref={groupRef} position={[0, 0.4, 0]}>
-      {/* Central Brushed Titanium Sculptural Ribbon */}
-      <mesh ref={ribbonRef} castShadow receiveShadow>
-        <torusGeometry args={[1.5, 0.22, 32, 100]} />
+    <group ref={groupRef} position={[0, 0.5, 0]}>
+      {/* Outer Titanium Architectural Mobius Ring */}
+      <mesh ref={primaryRingRef} castShadow receiveShadow>
+        <torusGeometry args={[1.55, 0.18, 36, 120]} />
         <meshStandardMaterial
-          color="#181c22"
-          roughness={0.28}
-          metalness={0.92}
-          envMapIntensity={1.5}
+          color="#16191f"
+          roughness={0.32}
+          metalness={0.90}
+          envMapIntensity={1.2}
         />
       </mesh>
 
-      {/* Kinetic Polished Chrome Sphere */}
-      <mesh ref={sphereRef} castShadow>
-        <sphereGeometry args={[0.16, 32, 32]} />
+      {/* Counter-rotating Inner Precision Track */}
+      <mesh ref={secondaryRingRef}>
+        <torusGeometry args={[1.22, 0.035, 16, 80]} />
         <meshStandardMaterial
-          color="#e8edf2"
-          roughness={0.08}
+          color="#222832"
+          roughness={0.2}
+          metalness={0.95}
+        />
+      </mesh>
+
+      {/* Kinetic Polished Dark Chrome Orb */}
+      <mesh ref={sphereRef} castShadow>
+        <sphereGeometry args={[0.14, 32, 32]} />
+        <meshStandardMaterial
+          color="#d0d8e2"
+          roughness={0.06}
           metalness={0.98}
         />
       </mesh>
 
-      {/* Concentric Secondary Ring */}
-      <mesh rotation={[Math.PI / 3, 0, 0]}>
-        <torusGeometry args={[1.85, 0.04, 16, 80]} />
-        <meshBasicMaterial
-          color="#00F299"
-          transparent
-          opacity={0.35}
-          wireframe
-        />
-      </mesh>
-
-      {/* Internal Luminous Energy Core (Octahedron) */}
+      {/* Inner Architectural Core (Controlled Emerald Energy, NOT a neon toy) */}
       <mesh ref={coreRef}>
-        <octahedronGeometry args={[0.42, 0]} />
+        <octahedronGeometry args={[0.38, 0]} />
         <meshPhysicalMaterial
           color="#00F299"
-          emissive="#00F299"
-          emissiveIntensity={1.2}
-          roughness={0.1}
-          metalness={0.2}
-          transmission={0.4}
+          emissive="#00b371"
+          emissiveIntensity={0.65}
+          roughness={0.15}
+          metalness={0.15}
+          transmission={0.6}
+          thickness={1.2}
           transparent
-          opacity={0.9}
+          opacity={0.88}
         />
       </mesh>
     </group>

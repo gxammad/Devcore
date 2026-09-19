@@ -14,7 +14,7 @@ interface HeroCanvasProps {
   scrollProgress: React.MutableRefObject<number>;
 }
 
-// Camera controller that drives smooth cinematic movement tied to scroll and mouse
+// Cinematic Camera Rig implementing the 0% -> 30% -> 60% -> 90% journey
 function CameraRig({
   scrollProgress,
   mousePos,
@@ -24,26 +24,31 @@ function CameraRig({
   mousePos: React.MutableRefObject<{ x: number; y: number }>;
   isMobile: boolean;
 }) {
-  const targetPos = useRef(new THREE.Vector3(0, 1.6, 7.5));
-  const targetLook = useRef(new THREE.Vector3(0, 0.2, 0));
+  const targetPos = useRef(new THREE.Vector3(0, 2.0, 8.2));
+  const targetLook = useRef(new THREE.Vector3(0, 0.3, 0));
 
   useFrame(({ camera }) => {
     const p = scrollProgress.current;
-    const mx = mousePos.current.x * (isMobile ? 0.3 : 0.8);
-    const my = mousePos.current.y * (isMobile ? 0.2 : 0.5);
+    const mx = mousePos.current.x * (isMobile ? 0.2 : 0.6);
+    const my = mousePos.current.y * (isMobile ? 0.15 : 0.4);
 
-    // Initial wide view -> glides down into terrain and moves deeper
-    // At scroll 0: [0, 1.8, 7.5]
-    // At scroll 1: [0, 0.4, 3.2]
-    const camY = 1.8 - p * 1.5 - my * 0.3;
-    const camZ = 7.5 - p * 4.4;
-    const camX = mx * 0.8 + Math.sin(p * Math.PI) * 0.4;
+    // Cinematic scroll progression:
+    // 0.0: Wide, mysterious, high negative space [0, 2.0, 8.2]
+    // 0.3: Descend and push forward [0.2, 1.4, 6.0]
+    // 0.6: Pass through ecosystem and columns [0.35, 0.7, 3.8]
+    // 0.9-1.0: Settle into avenue, handing off to Section 02 [0, 0.35, 1.8]
+    const camZ = 8.2 - p * 6.4;
+    const camY = 2.0 - p * 1.65 - my * 0.25;
+    const camX = mx * 0.6 + Math.sin(p * Math.PI) * 0.45;
 
     targetPos.current.set(camX, camY, camZ);
-    camera.position.lerp(targetPos.current, 0.06);
+    // Smooth cinematic damping
+    camera.position.lerp(targetPos.current, 0.05);
 
-    // Smooth focal target
-    targetLook.current.set(0, 0.2 - p * 0.4, -p * 1.5);
+    // Look target travels deeper down the central avenue
+    const lookY = 0.3 - p * 0.5;
+    const lookZ = -p * 4.5;
+    targetLook.current.set(0, lookY, lookZ);
     camera.lookAt(targetLook.current);
   });
 
@@ -55,7 +60,6 @@ export function HeroCanvas({ scrollProgress }: HeroCanvasProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [webglSupported, setWebglSupported] = useState(true);
   const mousePos = useRef({ x: 0, y: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -63,7 +67,6 @@ export function HeroCanvas({ scrollProgress }: HeroCanvasProps) {
     checkMobile();
     window.addEventListener('resize', checkMobile);
 
-    // Test WebGL support
     try {
       const canvas = document.createElement('canvas');
       const gl =
@@ -92,52 +95,47 @@ export function HeroCanvas({ scrollProgress }: HeroCanvasProps) {
   }
 
   return (
-    <div ref={containerRef} className="absolute inset-0 w-full h-full pointer-events-none">
+    <div className="absolute inset-0 w-full h-full pointer-events-none">
       <Canvas
-        camera={{ position: [0, 1.8, 7.5], fov: isMobile ? 55 : 45 }}
-        dpr={isMobile ? [1, 1.2] : [1, 1.7]}
+        camera={{ position: [0, 2.0, 8.2], fov: isMobile ? 54 : 44 }}
+        dpr={isMobile ? [1, 1.2] : [1, 1.6]}
         gl={{
           antialias: true,
           alpha: true,
           powerPreference: 'high-performance',
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.15,
+          toneMappingExposure: 1.1,
         }}
         className="w-full h-full"
       >
         <Suspense fallback={null}>
-          {/* Volumetric / Exponential Mist */}
-          <fog attach="fog" args={['#050608', 4, 18]} />
+          {/* Volumetric Dark Void Fog */}
+          <fog attach="fog" args={['#050608', 5, 20]} />
 
-          {/* Precision Studio Lighting */}
-          <ambientLight intensity={0.4} color="#0c1118" />
-
-          {/* Key Light */}
+          {/* Architectural Key & Rim Lights */}
+          <ambientLight intensity={0.35} color="#0b0e14" />
           <directionalLight
-            position={[6, 8, 5]}
-            intensity={1.8}
+            position={[7, 9, 6]}
+            intensity={1.6}
             color="#ffffff"
             castShadow
           />
-
-          {/* Cyan/Mint Rim Light */}
+          {/* Soft emerald rim illumination (accentuating silhouettes, not bathing everything in green) */}
           <directionalLight
-            position={[-7, 4, -4]}
-            intensity={2.4}
+            position={[-8, 3, -5]}
+            intensity={1.8}
             color="#00F299"
           />
+          <pointLight position={[0, 3.5, 0.5]} intensity={0.6} color="#7088a0" />
 
-          {/* Top Architectural Fill */}
-          <pointLight position={[0, 4, 1]} intensity={0.8} color="#88B0D0" />
-
-          {/* Interactive 3D World Components */}
+          {/* 3D Scene Layers */}
           <TectonicTerrain scrollProgress={scrollProgress} isMobile={isMobile} />
           <CrystallineFlora scrollProgress={scrollProgress} isMobile={isMobile} />
           <KineticMonolith scrollProgress={scrollProgress} mousePos={mousePos} />
           <DataSplines scrollProgress={scrollProgress} />
           <FloatingParticles isMobile={isMobile} />
 
-          {/* Camera Rig */}
+          {/* Camera Controller */}
           <CameraRig
             scrollProgress={scrollProgress}
             mousePos={mousePos}
