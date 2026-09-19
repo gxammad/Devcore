@@ -10,9 +10,9 @@ export function Footer() {
   };
 
   return (
-    <footer className="relative z-20 w-full bg-void border-t border-white/[0.06] pt-16 pb-12 px-6 sm:px-10 text-devcore-text-secondary">
+    <footer className="relative z-20 w-full bg-void border-t border-white/[0.03] pt-16 pb-12 px-6 sm:px-10 text-devcore-text-secondary">
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 pb-16 border-b border-white/[0.06]">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 pb-16 border-b border-white/[0.03]">
           {/* Brand Info (5 cols) */}
           <div className="md:col-span-5 flex flex-col items-start">
             <div className="flex items-center gap-3 mb-4 cursor-pointer" onClick={scrollToTop}>

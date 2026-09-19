@@ -1,71 +1,140 @@
 'use client';
 
-import React from 'react';
-import { ArrowRight, Code2, Layers, Cpu, Globe } from 'lucide-react';
+import React, { useRef, useEffect } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
+import { Layers, Cpu, Globe } from 'lucide-react';
+
+gsap.registerPlugin(ScrollTrigger);
 
 export function IntroSection() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const headlineRef = useRef<HTMLHeadingElement>(null);
+  const paraRef = useRef<HTMLParagraphElement>(null);
+  const cardsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const ctx = gsap.context(() => {
+      // Scrubbed cinematic emergence linked to scroll progress
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: 'top 85%',
+          end: 'top 20%',
+          scrub: 0.8,
+        },
+      });
+
+      if (headlineRef.current) {
+        tl.fromTo(
+          headlineRef.current,
+          { y: 50, opacity: 0.15 },
+          { y: 0, opacity: 1, duration: 1, ease: 'power2.out' },
+          0
+        );
+      }
+
+      if (paraRef.current) {
+        tl.fromTo(
+          paraRef.current,
+          { y: 30, opacity: 0.2 },
+          { y: 0, opacity: 1, duration: 1, ease: 'power2.out' },
+          0.2
+        );
+      }
+
+      if (cardsRef.current) {
+        const cards = cardsRef.current.children;
+        tl.fromTo(
+          cards,
+          { y: 40, opacity: 0.1, scale: 0.96 },
+          { y: 0, opacity: 1, scale: 1, stagger: 0.15, duration: 1, ease: 'power2.out' },
+          0.3
+        );
+      }
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
     <section
       id="section-intro"
-      className="relative z-20 w-full py-32 sm:py-44 px-6 sm:px-8 bg-gradient-to-b from-void via-surface to-void border-t border-white/[0.06]"
+      ref={containerRef}
+      className="relative z-20 w-full py-36 sm:py-48 px-6 sm:px-10 bg-void border-none outline-none overflow-hidden"
     >
-      <div className="max-w-6xl mx-auto">
-        {/* Section Index Marker */}
-        <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-widest text-accent-primary mb-8">
-          <span className="w-2 h-2 rounded-full bg-accent-primary" />
-          <span>02 // INTRODUCTION</span>
+      {/* Subtle Background Radial Atmosphere */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-accent-primary/5 rounded-full blur-[130px] pointer-events-none" />
+
+      <div className="max-w-6xl mx-auto relative z-10">
+        {/* Section Marker */}
+        <div className="flex items-center gap-2.5 font-mono text-xs uppercase tracking-widest text-accent-primary mb-8">
+          <span className="w-1.5 h-1.5 rounded-full bg-accent-primary" />
+          <span>02 // INTRODUCTION — THE ENTERPRISE SCALE</span>
         </div>
 
-        {/* Large Statement */}
-        <div className="max-w-4xl mb-16">
-          <h2 className="font-display font-medium text-3xl sm:text-5xl md:text-6xl lg:text-[64px] leading-[1.12] tracking-tight text-devcore-text-primary mb-8">
+        {/* Large Cinematic Statement */}
+        <div className="max-w-4xl mb-20">
+          <h2
+            ref={headlineRef}
+            className="font-display font-medium text-3xl sm:text-5xl md:text-6xl lg:text-[66px] leading-[1.10] tracking-tight text-devcore-text-primary mb-8 will-change-transform"
+          >
             Technology should not only work.{' '}
             <span className="text-devcore-text-secondary">
               It should propel your entire enterprise forward.
             </span>
           </h2>
-          <p className="text-lg sm:text-xl text-devcore-text-secondary leading-relaxed font-light max-w-3xl">
+          <p
+            ref={paraRef}
+            className="text-lg sm:text-xl text-devcore-text-secondary leading-relaxed font-light max-w-3xl will-change-transform"
+          >
             Devcore bridges visionary product strategy with rigorous systems architecture.
             We assemble specialized engineering pods to craft resilient web applications,
             autonomous AI workflows, and distributed cloud backends engineered to scale without compromise.
           </p>
         </div>
 
-        {/* Architectural Principles (Spacious, No Boring Cards) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 pt-12 border-t border-white/[0.08]">
-          <div className="flex flex-col gap-3">
+        {/* Three Architectural Principles */}
+        <div
+          ref={cardsRef}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-12 pt-12 border-t border-white/[0.06]"
+        >
+          <div className="flex flex-col gap-3 p-6 rounded-xl bg-surface/30 border border-white/[0.04] hover:border-accent-primary/30 transition-all duration-300">
             <div className="w-10 h-10 rounded-lg bg-surface flex items-center justify-center border border-white/[0.08] text-accent-primary mb-2">
               <Layers className="w-5 h-5" />
             </div>
             <h3 className="font-display font-semibold text-lg text-devcore-text-primary">
               Architectural Rigor
             </h3>
-            <p className="text-sm text-devcore-text-secondary leading-relaxed">
-              Every system is engineered from the first principles of fault-tolerance, latency optimization, and clean modular decoupling.
+            <p className="text-sm text-devcore-text-secondary leading-relaxed font-light">
+              Every system is engineered from first principles of fault-tolerance, latency optimization, and clean modular decoupling.
             </p>
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 p-6 rounded-xl bg-surface/30 border border-white/[0.04] hover:border-accent-primary/30 transition-all duration-300">
             <div className="w-10 h-10 rounded-lg bg-surface flex items-center justify-center border border-white/[0.08] text-accent-primary mb-2">
               <Cpu className="w-5 h-5" />
             </div>
             <h3 className="font-display font-semibold text-lg text-devcore-text-primary">
               Applied Intelligence
             </h3>
-            <p className="text-sm text-devcore-text-secondary leading-relaxed">
-              Integrating real-time AI agents and automated reasoning directly into core business operations, not just surface chatbots.
+            <p className="text-sm text-devcore-text-secondary leading-relaxed font-light">
+              Integrating autonomous AI workflows and real-time reasoning directly into operational loops, not just surface chat widgets.
             </p>
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 p-6 rounded-xl bg-surface/30 border border-white/[0.04] hover:border-accent-primary/30 transition-all duration-300">
             <div className="w-10 h-10 rounded-lg bg-surface flex items-center justify-center border border-white/[0.08] text-accent-primary mb-2">
               <Globe className="w-5 h-5" />
             </div>
             <h3 className="font-display font-semibold text-lg text-devcore-text-primary">
-              Global Scale
+              Global Resilience
             </h3>
-            <p className="text-sm text-devcore-text-secondary leading-relaxed">
-              Edge-distributed backends and low-latency infrastructure built to handle millions of transactions across distributed global clusters.
+            <p className="text-sm text-devcore-text-secondary leading-relaxed font-light">
+              Edge-distributed backends and multi-region Kubernetes clusters built to handle millions of transactions across global clusters.
             </p>
           </div>
         </div>

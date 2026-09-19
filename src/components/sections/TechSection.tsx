@@ -1,6 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface TechNode {
   name: string;
@@ -22,15 +26,17 @@ const TECH_NODES: TechNode[] = [
   { name: 'PyTorch / CUDA', category: 'ai', status: 'TENSOR PARALLEL', x: 40, y: 72 },
   { name: 'eBPF / Kernel', category: 'lowlevel', status: 'OBSERVABILITY', x: 55, y: 40 },
   { name: 'Kafka / Redpanda', category: 'backend', status: 'EVENT LOG', x: 62, y: 82 },
-  { name: 'PostgreSQL / Timescale', category: 'backend', status: 'ACID SHARD', x: 18, y: 75 },
+  { name: 'PostgreSQL', category: 'backend', status: 'ACID SHARD', x: 18, y: 75 },
   { name: 'Redis / Dragonfly', category: 'backend', status: 'IN-MEMORY', x: 85, y: 78 },
   { name: 'AWS / Cloudflare', category: 'cloud', status: 'MULTI-REGION', x: 50, y: 88 },
 ];
 
 export function TechSection() {
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
-  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const hoveredNodeRef = useRef<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const nodesGridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -39,6 +45,7 @@ export function TechSection() {
     if (!ctx) return;
 
     let animId: number;
+    let isVisible = false;
     let width = (canvas.width = canvas.offsetWidth);
     let height = (canvas.height = canvas.offsetHeight);
 
@@ -49,39 +56,43 @@ export function TechSection() {
     };
     window.addEventListener('resize', handleResize);
 
-    // Particle nodes for ambient connecting network
     const points = TECH_NODES.map((node) => ({
       x: (node.x / 100) * width,
       y: (node.y / 100) * height,
-      vx: (Math.random() - 0.5) * 0.35,
-      vy: (Math.random() - 0.5) * 0.35,
+      vx: (Math.random() - 0.5) * 0.25,
+      vy: (Math.random() - 0.5) * 0.25,
       name: node.name,
-      category: node.category,
     }));
 
     const render = () => {
+      if (!isVisible) return;
       ctx.clearRect(0, 0, width, height);
 
-      // Update positions
+      // Gentle drift
       points.forEach((p) => {
         p.x += p.vx;
         p.y += p.vy;
-
-        if (p.x < 30 || p.x > width - 30) p.vx *= -1;
-        if (p.y < 30 || p.y > height - 30) p.vy *= -1;
+        if (p.x < 20 || p.x > width - 20) p.vx *= -1;
+        if (p.y < 20 || p.y > height - 20) p.vy *= -1;
       });
 
-      // Draw connecting filaments
+      // Connecting filaments
+      const activeHover = hoveredNodeRef.current;
       for (let i = 0; i < points.length; i++) {
         for (let j = i + 1; j < points.length; j++) {
           const dx = points[i].x - points[j].x;
           const dy = points[i].y - points[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
-          if (dist < 180) {
-            const alpha = (1 - dist / 180) * 0.18;
-            ctx.strokeStyle = `rgba(0, 242, 153, ${alpha})`;
-            ctx.lineWidth = 1;
+          if (dist < 170) {
+            const isConnectedToHover =
+              activeHover && (points[i].name === activeHover || points[j].name === activeHover);
+
+            const alpha = (1 - dist / 170) * (isConnectedToHover ? 0.6 : 0.15);
+            ctx.strokeStyle = isConnectedToHover
+              ? `rgba(0, 242, 153, ${alpha})`
+              : `rgba(255, 255, 255, ${alpha * 0.4})`;
+            ctx.lineWidth = isConnectedToHover ? 1.5 : 0.75;
             ctx.beginPath();
             ctx.moveTo(points[i].x, points[i].y);
             ctx.lineTo(points[j].x, points[j].y);
@@ -92,30 +103,60 @@ export function TechSection() {
 
       // Draw nodes
       points.forEach((p) => {
-        const isHovered = hoveredNode === p.name;
-        ctx.fillStyle = isHovered ? '#00F299' : 'rgba(255, 255, 255, 0.4)';
+        const isHovered = activeHover === p.name;
+        ctx.fillStyle = isHovered ? '#00F299' : 'rgba(255, 255, 255, 0.35)';
         ctx.beginPath();
         ctx.arc(p.x, p.y, isHovered ? 3.5 : 2, 0, Math.PI * 2);
         ctx.fill();
-
-        if (isHovered) {
-          ctx.strokeStyle = 'rgba(0, 242, 153, 0.4)';
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
-          ctx.stroke();
-        }
       });
 
       animId = requestAnimationFrame(render);
     };
 
-    render();
+    // IntersectionObserver to pause loop when off-screen (saves 100% CPU when scrolling other sections)
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+        if (isVisible) {
+          cancelAnimationFrame(animId);
+          animId = requestAnimationFrame(render);
+        }
+      },
+      { threshold: 0.05 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    // GSAP Scroll Assembly of the Node Grid
+    if (nodesGridRef.current && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      gsap.fromTo(
+        nodesGridRef.current.children,
+        { scale: 0.9, opacity: 0.2, y: 30 },
+        {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          stagger: 0.04,
+          duration: 0.8,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: 'top 80%',
+            end: 'top 30%',
+            scrub: 0.6,
+          },
+        }
+      );
+    }
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      observer.disconnect();
       cancelAnimationFrame(animId);
     };
-  }, [hoveredNode]);
+  }, []);
 
   const filteredNodes = TECH_NODES.filter((n) =>
     selectedFilter === 'all' ? true : n.category === selectedFilter
@@ -124,11 +165,12 @@ export function TechSection() {
   return (
     <section
       id="architecture"
-      className="relative z-20 w-full py-32 sm:py-44 px-6 sm:px-10 bg-void border-t border-white/[0.04]"
+      ref={sectionRef}
+      className="relative z-20 w-full py-36 sm:py-48 px-6 sm:px-10 bg-void border-none outline-none overflow-hidden"
     >
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-14 pb-8 border-b border-white/[0.06] gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-14 pb-8 border-b border-white/[0.04] gap-6">
           <div>
             <div className="flex items-center gap-2.5 font-mono text-xs uppercase tracking-widest text-accent-primary mb-3">
               <span className="w-1.5 h-1.5 rounded-full bg-accent-primary" />
@@ -156,7 +198,7 @@ export function TechSection() {
             <button
               key={cat.id}
               onClick={() => setSelectedFilter(cat.id)}
-              className={`px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider transition-all duration-300 ${
+              className={`px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider transition-all duration-300 cursor-pointer ${
                 selectedFilter === cat.id
                   ? 'bg-accent-primary text-void font-semibold shadow-accent-glow'
                   : 'bg-surface border border-white/[0.06] text-devcore-text-secondary hover:text-devcore-text-primary hover:border-white/[0.12]'
@@ -176,30 +218,26 @@ export function TechSection() {
           />
 
           {/* Foreground Interactive Node Badges */}
-          <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {filteredNodes.map((node) => {
-              const isHovered = hoveredNode === node.name;
-
-              return (
-                <div
-                  key={node.name}
-                  onMouseEnter={() => setHoveredNode(node.name)}
-                  onMouseLeave={() => setHoveredNode(null)}
-                  className={`p-4 rounded-xl border transition-all duration-300 cursor-default select-none ${
-                    isHovered
-                      ? 'bg-surface border-accent-primary/60 shadow-accent-glow scale-105'
-                      : 'bg-surface/70 border-white/[0.04] hover:border-white/[0.1]'
-                  }`}
-                >
-                  <div className="font-mono text-[9px] uppercase tracking-widest text-accent-primary mb-1">
-                    {node.status}
-                  </div>
-                  <div className="font-display font-medium text-sm sm:text-base text-devcore-text-primary">
-                    {node.name}
-                  </div>
+          <div ref={nodesGridRef} className="relative z-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {filteredNodes.map((node) => (
+              <div
+                key={node.name}
+                onMouseEnter={() => {
+                  hoveredNodeRef.current = node.name;
+                }}
+                onMouseLeave={() => {
+                  hoveredNodeRef.current = null;
+                }}
+                className="p-4 rounded-xl border border-white/[0.04] bg-surface/70 hover:border-accent-primary/50 hover:bg-surface hover:shadow-accent-glow transition-all duration-200 cursor-default select-none will-change-transform"
+              >
+                <div className="font-mono text-[9px] uppercase tracking-widest text-accent-primary mb-1">
+                  {node.status}
                 </div>
-              );
-            })}
+                <div className="font-display font-medium text-sm sm:text-base text-devcore-text-primary">
+                  {node.name}
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* System Telemetry Footer */}

@@ -28,7 +28,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Devcore — Building Digital Systems That Scale',
+  title: 'Devcore',
   description:
     'Devcore designs and engineers high-performance digital products, platforms, and intelligent systems for ambitious teams.',
   keywords: [
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'Devcore Engineering' }],
   openGraph: {
-    title: 'Devcore — Building Digital Systems That Scale',
+    title: 'Devcore',
     description:
       'Devcore designs and engineers high-performance digital products, platforms, and intelligent systems.',
     url: 'https://devcore.io',
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Devcore — Building Digital Systems That Scale',
+    title: 'Devcore',
     description:
       'Devcore designs and engineers high-performance digital products, platforms, and intelligent systems.',
   },

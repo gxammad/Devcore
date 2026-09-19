@@ -9,11 +9,10 @@ interface DataSplinesProps {
 }
 
 export function DataSplines({ scrollProgress }: DataSplinesProps) {
-  const linesRef = useRef<THREE.Group>(null);
+  const lineMatRef = useRef<THREE.LineBasicMaterial>(null);
 
-  // Generate 6 thin, elegant spline paths weaving through terrain fissures
-  const curves = useMemo(() => {
-    const items: THREE.CatmullRomCurve3[] = [];
+  // Combine 6 spline paths into a single LineSegments buffer geometry (1 single draw call)
+  const combinedGeometry = useMemo(() => {
     const targets = [
       new THREE.Vector3(-5.2, -1.8, -4.0),
       new THREE.Vector3(5.0, -1.6, -3.8),
@@ -22,6 +21,8 @@ export function DataSplines({ scrollProgress }: DataSplinesProps) {
       new THREE.Vector3(-1.5, -2.1, -6.5),
       new THREE.Vector3(2.0, -1.9, -6.2),
     ];
+
+    const allPositions: number[] = [];
 
     targets.forEach((end, idx) => {
       const mid1 = new THREE.Vector3(
@@ -40,56 +41,39 @@ export function DataSplines({ scrollProgress }: DataSplinesProps) {
         mid2,
         end,
       ]);
-      items.push(curve);
-    });
 
-    return items;
-  }, []);
-
-  const lineGeometries = useMemo(() => {
-    return curves.map((curve) => {
-      const points = curve.getPoints(72);
-      return new THREE.BufferGeometry().setFromPoints(points);
-    });
-  }, [curves]);
-
-  useFrame(({ clock }) => {
-    if (!linesRef.current) return;
-    const t = clock.getElapsedTime();
-    const p = scrollProgress.current;
-
-    // At 0%: subtle resting state (opacity 0.05).
-    // As scroll advances: illuminates organically as connection is established.
-    const scrollFactor = Math.min(1, Math.max(0, (p - 0.15) / 0.5));
-
-    linesRef.current.children.forEach((child, i) => {
-      const line = child as THREE.Line;
-      const mat = line.material as THREE.LineBasicMaterial;
-      if (mat) {
-        const pulse = 0.05 + scrollFactor * (0.22 + Math.sin(t * 2.0 + i * 1.5) * 0.08);
-        mat.opacity = pulse;
+      const points = curve.getPoints(40);
+      for (let i = 0; i < points.length - 1; i++) {
+        allPositions.push(points[i].x, points[i].y, points[i].z);
+        allPositions.push(points[i + 1].x, points[i + 1].y, points[i + 1].z);
       }
     });
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(allPositions, 3));
+    return geo;
+  }, []);
+
+  useFrame(({ clock }) => {
+    if (!lineMatRef.current) return;
+    const p = scrollProgress.current;
+    const t = clock.getElapsedTime();
+
+    // Subtle scroll-driven opacity on a single shared material
+    const scrollFactor = Math.min(1, Math.max(0, (p - 0.15) / 0.5));
+    const targetOpacity = 0.04 + scrollFactor * (0.24 + Math.sin(t * 2.0) * 0.06);
+
+    lineMatRef.current.opacity = targetOpacity;
   });
 
   return (
-    <group ref={linesRef}>
-      {lineGeometries.map((geo, idx) => (
-        <primitive
-          key={idx}
-          object={
-            new THREE.Line(
-              geo,
-              new THREE.LineBasicMaterial({
-                color: new THREE.Color('#00F299'),
-                transparent: true,
-                opacity: 0.05,
-                linewidth: 1,
-              })
-            )
-          }
-        />
-      ))}
-    </group>
+    <lineSegments geometry={combinedGeometry}>
+      <lineBasicMaterial
+        ref={lineMatRef}
+        color="#00F299"
+        transparent
+        opacity={0.04}
+      />
+    </lineSegments>
   );
 }

@@ -1,8 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import Image from 'next/image';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
 import { Compass, Hammer, Rocket } from 'lucide-react';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const PROCESS_STEPS = [
   {
@@ -38,17 +42,92 @@ const PROCESS_STEPS = [
 ];
 
 export function ProcessSection() {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const spineProgressRef = useRef<HTMLDivElement>(null);
+  const cardsListRef = useRef<HTMLDivElement>(null);
+  const visualRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!sectionRef.current) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const ctx = gsap.context(() => {
+      // 1. Data spine scrub
+      if (spineProgressRef.current) {
+        gsap.fromTo(
+          spineProgressRef.current,
+          { height: '0%' },
+          {
+            height: '100%',
+            ease: 'none',
+            scrollTrigger: {
+              trigger: cardsListRef.current,
+              start: 'top 75%',
+              end: 'bottom 60%',
+              scrub: 0.6,
+            },
+          }
+        );
+      }
+
+      // 2. Step cards scrub emergence
+      if (cardsListRef.current) {
+        const cards = cardsListRef.current.querySelectorAll('.process-card-item');
+        cards.forEach((card) => {
+          gsap.fromTo(
+            card,
+            { y: 40, opacity: 0.15 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.8,
+              ease: 'power2.out',
+              scrollTrigger: {
+                trigger: card,
+                start: 'top 85%',
+                end: 'top 50%',
+                scrub: 0.6,
+              },
+            }
+          );
+        });
+      }
+
+      // 3. Left visual subtle depth parallax
+      if (visualRef.current) {
+        gsap.fromTo(
+          visualRef.current,
+          { y: 30, scale: 0.96 },
+          {
+            y: -30,
+            scale: 1.02,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: 1.0,
+            },
+          }
+        );
+      }
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
     <section
       id="process"
-      className="relative z-20 w-full py-32 sm:py-40 px-6 sm:px-10 bg-gradient-to-b from-void via-surface/40 to-void border-t border-white/[0.04]"
+      ref={sectionRef}
+      className="relative z-20 w-full py-36 sm:py-48 px-6 sm:px-10 bg-void border-none outline-none overflow-hidden"
     >
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="max-w-3xl mb-20">
           <div className="flex items-center gap-2.5 font-mono text-xs uppercase tracking-widest text-accent-primary mb-3">
             <span className="w-1.5 h-1.5 rounded-full bg-accent-primary" />
-            <span>04 // HOW WE BUILD — THE EVOLUTION</span>
+            <span>04 // HOW WE BUILD — THE TRANSFORMATION</span>
           </div>
           <h2 className="font-display font-semibold text-3xl sm:text-5xl lg:text-6xl tracking-tight text-devcore-text-primary mb-6">
             Chaos to Structure. <br />
@@ -63,7 +142,10 @@ export function ProcessSection() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Column: Evolutionary Visual Monolith (5 cols) */}
           <div className="lg:col-span-5 relative group">
-            <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] shadow-2xl bg-surface/80">
+            <div
+              ref={visualRef}
+              className="relative rounded-2xl overflow-hidden border border-white/[0.08] shadow-2xl bg-surface will-change-transform"
+            >
               <div className="relative aspect-[4/5] w-full">
                 <Image
                   src="/images/devcore_process_growth.jpg"
@@ -74,7 +156,7 @@ export function ProcessSection() {
                 />
                 {/* Gradient Overlays */}
                 <div className="absolute inset-0 bg-gradient-to-t from-void via-transparent to-transparent opacity-80" />
-                <div className="absolute inset-0 bg-gradient-to-tr from-accent-primary/10 via-transparent to-transparent opacity-40 group-hover:opacity-60 transition-opacity" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-accent-primary/10 via-transparent to-transparent opacity-30 group-hover:opacity-50 transition-opacity" />
               </div>
 
               {/* Inset Architectural Telemetry Tag */}
@@ -86,20 +168,26 @@ export function ProcessSection() {
           </div>
 
           {/* Right Column: The 3 Continuous Steps with Vertical Spine (7 cols) */}
-          <div className="lg:col-span-7 flex flex-col gap-8 relative pl-4 sm:pl-8">
-            {/* Continuous Vertical Data Spine */}
-            <div className="absolute left-0 top-6 bottom-6 w-[2px] bg-gradient-to-b from-accent-primary via-accent-primary/40 to-white/[0.08]" />
+          <div ref={cardsListRef} className="lg:col-span-7 flex flex-col gap-8 relative pl-4 sm:pl-8">
+            {/* Background Spine Track */}
+            <div className="absolute left-0 top-6 bottom-6 w-[2px] bg-white/[0.06]" />
+            {/* Luminous Animated Spine Scrub */}
+            <div
+              ref={spineProgressRef}
+              className="absolute left-0 top-6 w-[2px] bg-accent-primary shadow-[0_0_12px_rgba(0,242,153,0.8)] will-change-transform"
+              style={{ height: '0%' }}
+            />
 
-            {PROCESS_STEPS.map((step, idx) => {
+            {PROCESS_STEPS.map((step) => {
               const Icon = step.icon;
 
               return (
                 <div
                   key={step.step}
-                  className="relative pl-6 sm:pl-8 group transition-all duration-300"
+                  className="process-card-item relative pl-6 sm:pl-8 group transition-all duration-300 will-change-transform"
                 >
                   {/* Spine Node Marker */}
-                  <div className="absolute -left-[5px] top-1.5 w-3 h-3 rounded-full bg-void border-2 border-accent-primary group-hover:scale-125 transition-transform" />
+                  <div className="absolute -left-[5px] top-1.5 w-3 h-3 rounded-full bg-void border-2 border-accent-primary group-hover:scale-125 transition-transform shadow-accent-glow" />
 
                   {/* Step Card */}
                   <div className="p-6 sm:p-8 rounded-xl bg-surface/50 border border-white/[0.04] group-hover:border-accent-primary/30 group-hover:bg-surface/80 transition-all duration-300">

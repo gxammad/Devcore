@@ -1,7 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
 import { LucideIcon, Cpu, Globe, Smartphone, Cloud, Layers, Terminal, ArrowUpRight } from 'lucide-react';
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface Capability {
   id: string;
@@ -69,7 +73,7 @@ const CAPABILITIES: Capability[] = [
     title: 'Digital Product Engineering',
     category: 'STRATEGY // PRODUCT',
     description:
-      'End-to-end technical product development from foundational system architecture to rapid iterative deployment, scaling Ambitious teams from prototype to scale.',
+      'End-to-end technical product development from foundational system architecture to rapid iterative deployment, scaling ambitious teams from prototype to scale.',
     deliverables: ['Technical Architecture Scoping', 'Security Audits & Penetration', 'Continuous CI/CD Pipelines'],
     metrics: '4-Week Initial Pod Delivery',
     icon: Layers,
@@ -80,14 +84,56 @@ export function CapabilitiesSection() {
   const [activeId, setActiveId] = useState<string>('01');
   const activeCap = CAPABILITIES.find((c) => c.id === activeId) || CAPABILITIES[0];
 
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const nodesListRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!sectionRef.current) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: 'top 80%',
+          end: 'top 25%',
+          scrub: 0.8,
+        },
+      });
+
+      if (nodesListRef.current) {
+        const nodes = nodesListRef.current.children;
+        tl.fromTo(
+          nodes,
+          { x: -35, opacity: 0.15 },
+          { x: 0, opacity: 1, stagger: 0.1, duration: 1, ease: 'power2.out' },
+          0
+        );
+      }
+
+      if (panelRef.current) {
+        tl.fromTo(
+          panelRef.current,
+          { scale: 0.94, opacity: 0.2 },
+          { scale: 1, opacity: 1, duration: 1, ease: 'power2.out' },
+          0.2
+        );
+      }
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
     <section
       id="capabilities"
-      className="relative z-20 w-full py-32 sm:py-40 px-6 sm:px-10 bg-void border-t border-white/[0.04]"
+      ref={sectionRef}
+      className="relative z-20 w-full py-36 sm:py-44 px-6 sm:px-10 bg-void border-none outline-none overflow-hidden"
     >
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 pb-8 border-b border-white/[0.06] gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 pb-8 border-b border-white/[0.04] gap-6">
           <div>
             <div className="flex items-center gap-2.5 font-mono text-xs uppercase tracking-widest text-accent-primary mb-3">
               <span className="w-1.5 h-1.5 rounded-full bg-accent-primary animate-pulse" />
@@ -102,10 +148,10 @@ export function CapabilitiesSection() {
           </p>
         </div>
 
-        {/* Interactive Spatial System Map (No Boring 3x2 Generic Card Grid) */}
+        {/* Interactive Spatial System Map */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Interactive Capability Nodes (5 cols) */}
-          <div className="lg:col-span-5 flex flex-col gap-2.5">
+          <div ref={nodesListRef} className="lg:col-span-5 flex flex-col gap-2.5 will-change-transform">
             {CAPABILITIES.map((cap) => {
               const Icon = cap.icon;
               const isActive = cap.id === activeId;
@@ -115,9 +161,9 @@ export function CapabilitiesSection() {
                   key={cap.id}
                   onClick={() => setActiveId(cap.id)}
                   onMouseEnter={() => setActiveId(cap.id)}
-                  className={`w-full text-left p-4 sm:p-5 rounded-xl transition-all duration-300 flex items-center justify-between border ${
+                  className={`w-full text-left p-4 sm:p-5 rounded-xl transition-all duration-300 flex items-center justify-between border cursor-pointer ${
                     isActive
-                      ? 'bg-surface border-accent-primary/50 shadow-accent-glow'
+                      ? 'bg-surface border-accent-primary/50 shadow-accent-glow translate-x-1'
                       : 'bg-surface/30 border-white/[0.04] hover:bg-surface/60 hover:border-white/[0.1]'
                   }`}
                 >
@@ -167,13 +213,16 @@ export function CapabilitiesSection() {
 
           {/* Right Column: Architectural Deep-Dive Inspection Panel (7 cols) */}
           <div className="lg:col-span-7">
-            <div className="relative rounded-2xl bg-surface/70 border border-white/[0.08] p-8 sm:p-12 backdrop-blur-xl overflow-hidden min-h-[480px] flex flex-col justify-between">
+            <div
+              ref={panelRef}
+              className="relative rounded-2xl bg-surface/70 border border-white/[0.06] p-8 sm:p-12 backdrop-blur-xl overflow-hidden min-h-[480px] flex flex-col justify-between will-change-transform"
+            >
               {/* Subtle background circuit traces */}
               <div className="absolute top-0 right-0 w-80 h-80 bg-accent-primary/5 rounded-full blur-[90px] pointer-events-none" />
 
               <div>
                 {/* Header telemetry badge */}
-                <div className="flex items-center justify-between font-mono text-xs uppercase tracking-widest text-devcore-text-muted border-b border-white/[0.06] pb-4 mb-8">
+                <div className="flex items-center justify-between font-mono text-xs uppercase tracking-widest text-devcore-text-muted border-b border-white/[0.04] pb-4 mb-8">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-accent-primary animate-ping" />
                     <span className="text-accent-primary">SYSTEM NODE // {activeCap.id}</span>
@@ -211,7 +260,7 @@ export function CapabilitiesSection() {
               </div>
 
               {/* Bottom Architectural Verification Stamp */}
-              <div className="pt-8 mt-8 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono tracking-wider text-devcore-text-muted">
+              <div className="pt-8 mt-8 border-t border-white/[0.04] flex items-center justify-between text-[11px] font-mono tracking-wider text-devcore-text-muted">
                 <span>SPEC // DEVCORE PRODUCTION STANDARD</span>
                 <span className="text-accent-primary">VERIFIED STABLE</span>
               </div>

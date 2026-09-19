@@ -1,8 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { ArrowUpRight, Cpu, Layers, ShieldCheck } from 'lucide-react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface Project {
   id: string;
@@ -13,7 +16,6 @@ interface Project {
   services: string[];
   metrics: { label: string; value: string }[];
   image: string;
-  accent: string;
 }
 
 const PROJECTS: Project[] = [
@@ -30,7 +32,6 @@ const PROJECTS: Project[] = [
       { label: 'RELIABILITY', value: '100% Deterministic' },
     ],
     image: '/images/devcore_aura_trading.jpg',
-    accent: '#00F299',
   },
   {
     id: '02',
@@ -45,7 +46,6 @@ const PROJECTS: Project[] = [
       { label: 'SAFETY SLA', value: '99.999% Zero Collision' },
     ],
     image: '/images/devcore_synapse_robotics.jpg',
-    accent: '#00D685',
   },
   {
     id: '03',
@@ -60,21 +60,76 @@ const PROJECTS: Project[] = [
       { label: 'AVAILABILITY', value: '99.9999% uptime' },
     ],
     image: '/images/devcore_strata_cloud.jpg',
-    accent: '#88B0D0',
   },
 ];
 
 export function WorkSection() {
-  const [activeProject, setActiveProject] = useState<string>('01');
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const chaptersRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!sectionRef.current || !chaptersRef.current) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const ctx = gsap.context(() => {
+      const items = chaptersRef.current?.querySelectorAll('.project-chapter-row');
+      if (!items) return;
+
+      items.forEach((item) => {
+        const visual = item.querySelector('.project-visual-col');
+        const text = item.querySelector('.project-text-col');
+
+        if (visual && text) {
+          gsap.fromTo(
+            visual,
+            { scale: 0.92, opacity: 0.2, y: 50 },
+            {
+              scale: 1,
+              opacity: 1,
+              y: 0,
+              duration: 1,
+              ease: 'power2.out',
+              scrollTrigger: {
+                trigger: item,
+                start: 'top 85%',
+                end: 'top 35%',
+                scrub: 0.8,
+              },
+            }
+          );
+
+          gsap.fromTo(
+            text,
+            { opacity: 0.15, y: 35 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 1,
+              ease: 'power2.out',
+              scrollTrigger: {
+                trigger: item,
+                start: 'top 80%',
+                end: 'top 40%',
+                scrub: 0.8,
+              },
+            }
+          );
+        }
+      });
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
 
   return (
     <section
       id="work"
-      className="relative z-20 w-full py-32 sm:py-44 px-6 sm:px-10 bg-void border-t border-white/[0.04]"
+      ref={sectionRef}
+      className="relative z-20 w-full py-36 sm:py-48 px-6 sm:px-10 bg-void border-none outline-none overflow-hidden"
     >
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 pb-8 border-b border-white/[0.06] gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 pb-8 border-b border-white/[0.04] gap-6">
           <div>
             <div className="flex items-center gap-2.5 font-mono text-xs uppercase tracking-widest text-accent-primary mb-3">
               <span className="w-1.5 h-1.5 rounded-full bg-accent-primary" />
@@ -90,19 +145,18 @@ export function WorkSection() {
         </div>
 
         {/* Project Chapters Showcase */}
-        <div className="flex flex-col gap-24">
+        <div ref={chaptersRef} className="flex flex-col gap-28 sm:gap-36">
           {PROJECTS.map((project, index) => {
             const isReversed = index % 2 !== 0;
 
             return (
               <div
                 key={project.id}
-                onMouseEnter={() => setActiveProject(project.id)}
-                className={`grid grid-cols-1 lg:grid-cols-12 gap-10 sm:gap-14 items-center group`}
+                className="project-chapter-row grid grid-cols-1 lg:grid-cols-12 gap-10 sm:gap-16 items-center group"
               >
                 {/* Visual Imagery Column (7 cols) */}
                 <div
-                  className={`lg:col-span-7 ${
+                  className={`project-visual-col lg:col-span-7 will-change-transform ${
                     isReversed ? 'lg:order-2' : 'lg:order-1'
                   }`}
                 >
@@ -130,7 +184,7 @@ export function WorkSection() {
 
                 {/* Metadata & Technical Impact Column (5 cols) */}
                 <div
-                  className={`lg:col-span-5 flex flex-col justify-center ${
+                  className={`project-text-col lg:col-span-5 flex flex-col justify-center will-change-transform ${
                     isReversed ? 'lg:order-1' : 'lg:order-2'
                   }`}
                 >
@@ -157,7 +211,7 @@ export function WorkSection() {
                   </div>
 
                   {/* Quantified Metrics Grid */}
-                  <div className="grid grid-cols-3 gap-4 pt-6 border-t border-white/[0.08]">
+                  <div className="grid grid-cols-3 gap-4 pt-6 border-t border-white/[0.06]">
                     {project.metrics.map((metric, mIdx) => (
                       <div key={mIdx} className="flex flex-col">
                         <span className="font-mono text-[9px] uppercase tracking-wider text-devcore-text-muted mb-1">

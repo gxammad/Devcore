@@ -1,7 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import Image from 'next/image';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const PILLARS = [
   {
@@ -35,10 +39,64 @@ const PILLARS = [
 ];
 
 export function WhySection() {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const monolithRef = useRef<HTMLDivElement>(null);
+  const pillarsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!sectionRef.current) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const ctx = gsap.context(() => {
+      // Slow, heavy architectural parallax on monolith image
+      if (monolithRef.current) {
+        gsap.fromTo(
+          monolithRef.current,
+          { y: 35, scale: 0.98 },
+          {
+            y: -35,
+            scale: 1.02,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: 1.2,
+            },
+          }
+        );
+      }
+
+      // Gentle emergence of the 4 pillars
+      if (pillarsRef.current) {
+        gsap.fromTo(
+          pillarsRef.current.children,
+          { opacity: 0.2, y: 25 },
+          {
+            opacity: 1,
+            y: 0,
+            stagger: 0.1,
+            duration: 1,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: 'top 75%',
+              end: 'top 30%',
+              scrub: 0.8,
+            },
+          }
+        );
+      }
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
     <section
       id="why"
-      className="relative z-20 w-full py-32 sm:py-44 px-6 sm:px-10 bg-void border-t border-white/[0.04]"
+      ref={sectionRef}
+      className="relative z-20 w-full py-36 sm:py-48 px-6 sm:px-10 bg-void border-none outline-none overflow-hidden"
     >
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
@@ -59,7 +117,10 @@ export function WhySection() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Column: Monolithic Visual (6 cols) */}
           <div className="lg:col-span-6">
-            <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] shadow-2xl bg-surface group">
+            <div
+              ref={monolithRef}
+              className="relative rounded-2xl overflow-hidden border border-white/[0.08] shadow-2xl bg-surface group will-change-transform"
+            >
               <div className="relative aspect-[4/3] w-full">
                 <Image
                   src="/images/devcore_why_monolith.jpg"
@@ -81,7 +142,7 @@ export function WhySection() {
           </div>
 
           {/* Right Column: 4 Pillars of Precision (6 cols) */}
-          <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div ref={pillarsRef} className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-6 will-change-transform">
             {PILLARS.map((pillar) => (
               <div
                 key={pillar.num}
