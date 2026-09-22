@@ -171,17 +171,29 @@ export function CrystallineFlora({ scrollProgress, isMobile = false }: Crystalli
         ref={crystalMeshRef}
         args={[crystalGeo, undefined, crystalCount]}
       >
-        <meshPhysicalMaterial
-          color="#00F299"
-          emissive="#004a2c"
-          emissiveIntensity={0.45}
-          roughness={0.25}
-          metalness={0.10}
-          transmission={0.60}
-          thickness={1.2}
-          transparent={true}
-          opacity={0.92}
-        />
+        {isMobile ? (
+          <meshStandardMaterial
+            color="#00F299"
+            emissive="#004a2c"
+            emissiveIntensity={0.6}
+            roughness={0.2}
+            metalness={0.15}
+            transparent={true}
+            opacity={0.92}
+          />
+        ) : (
+          <meshPhysicalMaterial
+            color="#00F299"
+            emissive="#004a2c"
+            emissiveIntensity={0.45}
+            roughness={0.25}
+            metalness={0.10}
+            transmission={0.60}
+            thickness={1.2}
+            transparent={true}
+            opacity={0.92}
+          />
+        )}
       </instancedMesh>
 
       {/* Rising Architectural Titanium Monolith Columns */}

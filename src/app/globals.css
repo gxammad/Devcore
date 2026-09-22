@@ -53,7 +53,7 @@ body {
   background: #00F299;
 }
 
-/* Ambient Grain Overlay */
+/* Ambient Grain Overlay - Disabled on mobile to eliminate heavy SVG filter compositor lag */
 .bg-grain {
   position: fixed;
   top: 0;
@@ -64,6 +64,12 @@ body {
   z-index: 99;
   opacity: 0.035;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  .bg-grain {
+    display: none !important;
+  }
 }
 
 /* Glassmorphism helpers */
@@ -92,12 +98,126 @@ body {
   text-shadow: 0 0 25px rgba(0, 242, 153, 0.5);
 }
 
+/* Custom Simple GPU-Accelerated CSS Animations */
+@keyframes devcoreFadeUp {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes devcoreFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes devcoreScaleUp {
+  0% {
+    opacity: 0;
+    transform: scale3d(0.95, 0.95, 1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+@keyframes devcoreSpinSlow {
+  from {
+    transform: translate3d(-50%, -50%, 0) rotate(0deg);
+  }
+  to {
+    transform: translate3d(-50%, -50%, 0) rotate(360deg);
+  }
+}
+
+@keyframes devcoreSpinReverse {
+  from {
+    transform: translate3d(-50%, -50%, 0) rotate(360deg);
+  }
+  to {
+    transform: translate3d(-50%, -50%, 0) rotate(0deg);
+  }
+}
+
+@keyframes devcoreGlowPulse {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale3d(1, 1, 1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale3d(1.04, 1.04, 1);
+  }
+}
+
+/* Performance Scroll Reveal Classes (Compositor Thread Only) */
+.reveal-init {
+  opacity: 0;
+  transform: translate3d(0, 22px, 0);
+  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-init.is-revealed {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  will-change: auto;
+}
+
+.reveal-scale {
+  opacity: 0;
+  transform: scale3d(0.95, 0.95, 1);
+  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-scale.is-revealed {
+  opacity: 1;
+  transform: scale3d(1, 1, 1);
+  will-change: auto;
+}
+
+/* Stagger transition delay helpers */
+.delay-100 { transition-delay: 100ms; }
+.delay-150 { transition-delay: 150ms; }
+.delay-200 { transition-delay: 200ms; }
+.delay-250 { transition-delay: 250ms; }
+.delay-300 { transition-delay: 300ms; }
+.delay-400 { transition-delay: 400ms; }
+.delay-500 { transition-delay: 500ms; }
+
+/* Pure CSS Spin & Pulse Utilities */
+.animate-spin-slow {
+  animation: devcoreSpinSlow 80s linear infinite;
+}
+
+.animate-spin-reverse {
+  animation: devcoreSpinReverse 65s linear infinite;
+}
+
+.animate-glow-pulse {
+  animation: devcoreGlowPulse 6s ease-in-out infinite;
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  .reveal-init,
+  .reveal-scale {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 }

@@ -1,11 +1,8 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import Image from 'next/image';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
+import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 interface Project {
   id: string;
@@ -64,62 +61,7 @@ const PROJECTS: Project[] = [
 ];
 
 export function WorkSection() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const chaptersRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!sectionRef.current || !chaptersRef.current) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    const ctx = gsap.context(() => {
-      const items = chaptersRef.current?.querySelectorAll('.project-chapter-row');
-      if (!items) return;
-
-      items.forEach((item) => {
-        const visual = item.querySelector('.project-visual-col');
-        const text = item.querySelector('.project-text-col');
-
-        if (visual && text) {
-          gsap.fromTo(
-            visual,
-            { scale: 0.92, opacity: 0.2, y: 50 },
-            {
-              scale: 1,
-              opacity: 1,
-              y: 0,
-              duration: 1,
-              ease: 'power2.out',
-              scrollTrigger: {
-                trigger: item,
-                start: 'top 85%',
-                end: 'top 35%',
-                scrub: 0.8,
-              },
-            }
-          );
-
-          gsap.fromTo(
-            text,
-            { opacity: 0.15, y: 35 },
-            {
-              opacity: 1,
-              y: 0,
-              duration: 1,
-              ease: 'power2.out',
-              scrollTrigger: {
-                trigger: item,
-                start: 'top 80%',
-                end: 'top 40%',
-                scrub: 0.8,
-              },
-            }
-          );
-        }
-      });
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
+  const sectionRef = useScrollReveal<HTMLDivElement>();
 
   return (
     <section
@@ -130,7 +72,7 @@ export function WorkSection() {
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 pb-8 border-b border-white/[0.04] gap-6">
-          <div>
+          <div className="reveal-init">
             <div className="flex items-center gap-2.5 font-mono text-xs uppercase tracking-widest text-accent-primary mb-3">
               <span className="w-1.5 h-1.5 rounded-full bg-accent-primary" />
               <span>05 // SELECTED WORK — CHAPTERS</span>
@@ -139,13 +81,13 @@ export function WorkSection() {
               Engineered for Impact.
             </h2>
           </div>
-          <p className="text-devcore-text-secondary max-w-md text-sm sm:text-base font-light leading-relaxed">
+          <p className="reveal-init delay-150 text-devcore-text-secondary max-w-md text-sm sm:text-base font-light leading-relaxed">
             Every project is treated as an architectural chapter: custom-engineered from bare metal to user interface for extraordinary scale.
           </p>
         </div>
 
         {/* Project Chapters Showcase */}
-        <div ref={chaptersRef} className="flex flex-col gap-28 sm:gap-36">
+        <div className="flex flex-col gap-28 sm:gap-36">
           {PROJECTS.map((project, index) => {
             const isReversed = index % 2 !== 0;
 
@@ -156,7 +98,7 @@ export function WorkSection() {
               >
                 {/* Visual Imagery Column (7 cols) */}
                 <div
-                  className={`project-visual-col lg:col-span-7 will-change-transform ${
+                  className={`reveal-scale lg:col-span-7 ${
                     isReversed ? 'lg:order-2' : 'lg:order-1'
                   }`}
                 >
@@ -184,7 +126,7 @@ export function WorkSection() {
 
                 {/* Metadata & Technical Impact Column (5 cols) */}
                 <div
-                  className={`project-text-col lg:col-span-5 flex flex-col justify-center will-change-transform ${
+                  className={`reveal-init delay-150 lg:col-span-5 flex flex-col justify-center ${
                     isReversed ? 'lg:order-1' : 'lg:order-2'
                   }`}
                 >

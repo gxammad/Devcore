@@ -145,7 +145,7 @@ export function HeroCanvas({ scrollProgress }: HeroCanvasProps) {
           {/* 3D Scene Components */}
           <TectonicTerrain scrollProgress={scrollProgress} isMobile={isMobile} />
           <CrystallineFlora scrollProgress={scrollProgress} isMobile={isMobile} />
-          <KineticMonolith scrollProgress={scrollProgress} mousePos={mousePos} />
+          <KineticMonolith scrollProgress={scrollProgress} mousePos={mousePos} isMobile={isMobile} />
           <DataSplines scrollProgress={scrollProgress} />
           <FloatingParticles isMobile={isMobile} />
 

@@ -1,11 +1,8 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import Image from 'next/image';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
+import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 const PILLARS = [
   {
@@ -39,58 +36,7 @@ const PILLARS = [
 ];
 
 export function WhySection() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const monolithRef = useRef<HTMLDivElement>(null);
-  const pillarsRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!sectionRef.current) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    const ctx = gsap.context(() => {
-      // Slow, heavy architectural parallax on monolith image
-      if (monolithRef.current) {
-        gsap.fromTo(
-          monolithRef.current,
-          { y: 35, scale: 0.98 },
-          {
-            y: -35,
-            scale: 1.02,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: sectionRef.current,
-              start: 'top bottom',
-              end: 'bottom top',
-              scrub: 1.2,
-            },
-          }
-        );
-      }
-
-      // Gentle emergence of the 4 pillars
-      if (pillarsRef.current) {
-        gsap.fromTo(
-          pillarsRef.current.children,
-          { opacity: 0.2, y: 25 },
-          {
-            opacity: 1,
-            y: 0,
-            stagger: 0.1,
-            duration: 1,
-            ease: 'power2.out',
-            scrollTrigger: {
-              trigger: sectionRef.current,
-              start: 'top 75%',
-              end: 'top 30%',
-              scrub: 0.8,
-            },
-          }
-        );
-      }
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
+  const sectionRef = useScrollReveal<HTMLDivElement>();
 
   return (
     <section
@@ -101,14 +47,14 @@ export function WhySection() {
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="max-w-3xl mb-20">
-          <div className="flex items-center gap-2.5 font-mono text-xs uppercase tracking-widest text-accent-primary mb-3">
+          <div className="reveal-init flex items-center gap-2.5 font-mono text-xs uppercase tracking-widest text-accent-primary mb-3">
             <span className="w-1.5 h-1.5 rounded-full bg-accent-primary" />
             <span>07 // WHY DEVCORE — ARCHITECTURAL CONFIDENCE</span>
           </div>
-          <h2 className="font-display font-semibold text-3xl sm:text-5xl lg:text-6xl tracking-tight text-devcore-text-primary mb-6">
+          <h2 className="reveal-init delay-100 font-display font-semibold text-3xl sm:text-5xl lg:text-6xl tracking-tight text-devcore-text-primary mb-6">
             Engineered for Certainty.
           </h2>
-          <p className="text-devcore-text-secondary text-base sm:text-lg font-light leading-relaxed">
+          <p className="reveal-init delay-150 text-devcore-text-secondary text-base sm:text-lg font-light leading-relaxed">
             When failure is not an option, ambitious enterprises partner with Devcore. We engineer systems with the precision of high-performance machinery.
           </p>
         </div>
@@ -117,10 +63,7 @@ export function WhySection() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Column: Monolithic Visual (6 cols) */}
           <div className="lg:col-span-6">
-            <div
-              ref={monolithRef}
-              className="relative rounded-2xl overflow-hidden border border-white/[0.08] shadow-2xl bg-surface group will-change-transform"
-            >
+            <div className="reveal-scale delay-200 relative rounded-2xl overflow-hidden border border-white/[0.08] shadow-2xl bg-surface group">
               <div className="relative aspect-[4/3] w-full">
                 <Image
                   src="/images/devcore_why_monolith.jpg"
@@ -142,30 +85,34 @@ export function WhySection() {
           </div>
 
           {/* Right Column: 4 Pillars of Precision (6 cols) */}
-          <div ref={pillarsRef} className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-6 will-change-transform">
-            {PILLARS.map((pillar) => (
-              <div
-                key={pillar.num}
-                className="p-6 sm:p-7 rounded-xl bg-surface/50 border border-white/[0.04] hover:border-accent-primary/30 hover:bg-surface/80 transition-all duration-300 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="font-mono text-xs font-semibold text-accent-primary">
-                      {pillar.num} //
-                    </span>
-                    <span className="font-mono text-[10px] tracking-wider text-devcore-text-muted">
-                      {pillar.metric}
-                    </span>
+          <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {PILLARS.map((pillar, idx) => {
+              const delayClass = idx === 0 ? 'delay-100' : idx === 1 ? 'delay-200' : idx === 2 ? 'delay-300' : 'delay-400';
+
+              return (
+                <div
+                  key={pillar.num}
+                  className={`reveal-init ${delayClass} p-6 sm:p-7 rounded-xl bg-surface/50 border border-white/[0.04] hover:border-accent-primary/30 hover:bg-surface/80 transition-all duration-300 flex flex-col justify-between`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="font-mono text-xs font-semibold text-accent-primary">
+                        {pillar.num} //
+                      </span>
+                      <span className="font-mono text-[10px] tracking-wider text-devcore-text-muted">
+                        {pillar.metric}
+                      </span>
+                    </div>
+                    <h3 className="font-display font-semibold text-lg sm:text-xl text-devcore-text-primary mb-2">
+                      {pillar.title}
+                    </h3>
+                    <p className="text-devcore-text-secondary text-xs sm:text-sm leading-relaxed font-light">
+                      {pillar.description}
+                    </p>
                   </div>
-                  <h3 className="font-display font-semibold text-lg sm:text-xl text-devcore-text-primary mb-2">
-                    {pillar.title}
-                  </h3>
-                  <p className="text-devcore-text-secondary text-xs sm:text-sm leading-relaxed font-light">
-                    {pillar.description}
-                  </p>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

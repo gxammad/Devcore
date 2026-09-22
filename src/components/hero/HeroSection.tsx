@@ -24,20 +24,22 @@ export function HeroSection() {
       return;
     }
 
-    const ctx = gsap.context(() => {
-      // Clean GSAP pin without conflicting CSS sticky
+    const mm = gsap.matchMedia();
+
+    // Desktop: Cinematic pin and scrub
+    mm.add('(min-width: 768px)', () => {
       const st = ScrollTrigger.create({
         trigger: containerRef.current,
         start: 'top top',
-        end: '+=150%',
+        end: '+=130%',
         pin: stageRef.current,
         pinSpacing: true,
-        scrub: 0.6, // Tighter, more responsive scrub
+        scrub: 0.6,
         anticipatePin: 1,
         onUpdate: (self) => {
           scrollProgressRef.current = self.progress;
 
-          // Dissolve hero typography cleanly between 0% and 32%
+          // Dissolve hero typography cleanly
           if (overlayWrapperRef.current) {
             const textOpacity = Math.max(0, 1 - self.progress * 3.2);
             const textTranslateY = -self.progress * 80;
@@ -49,9 +51,28 @@ export function HeroSection() {
       });
 
       return () => st.kill();
-    }, containerRef);
+    });
 
-    return () => ctx.revert();
+    // Mobile: NO pinning, NO scrub lock! Fluid touch momentum scrolling
+    mm.add('(max-width: 767px)', () => {
+      const st = ScrollTrigger.create({
+        trigger: containerRef.current,
+        start: 'top top',
+        end: 'bottom top',
+        scrub: false,
+        onUpdate: (self) => {
+          scrollProgressRef.current = self.progress * 0.4;
+          if (overlayWrapperRef.current) {
+            const textOpacity = Math.max(0, 1 - self.progress * 2.2);
+            overlayWrapperRef.current.style.opacity = textOpacity.toString();
+          }
+        },
+      });
+
+      return () => st.kill();
+    });
+
+    return () => mm.revert();
   }, []);
 
   const handleExploreClick = () => {

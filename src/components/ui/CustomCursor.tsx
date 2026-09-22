@@ -3,12 +3,14 @@
 import React, { useEffect, useRef } from 'react';
 
 export function CustomCursor() {
+  const [enabled, setEnabled] = React.useState(false);
   const cursorRef = useRef<HTMLDivElement>(null);
   const dotRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Only enable on pointer-fine (desktop mouse) devices
     if (!window.matchMedia('(pointer: fine)').matches) return;
+    setEnabled(true);
 
     const cursor = cursorRef.current;
     const dot = dotRef.current;
@@ -81,6 +83,8 @@ export function CustomCursor() {
       cancelAnimationFrame(rafId);
     };
   }, []);
+
+  if (!enabled) return null;
 
   return (
     <>

@@ -1,10 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
+import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 interface TechNode {
   name: string;
@@ -35,10 +32,12 @@ export function TechSection() {
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const hoveredNodeRef = useRef<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const nodesGridRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useScrollReveal<HTMLDivElement>();
 
   useEffect(() => {
+    // Only run the 2D constellation canvas physics on desktop screens to save 100% CPU/GPU on mobile touch scroll
+    if (window.innerWidth < 768) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -50,7 +49,7 @@ export function TechSection() {
     let height = (canvas.height = canvas.offsetHeight);
 
     const handleResize = () => {
-      if (!canvas) return;
+      if (!canvas || window.innerWidth < 768) return;
       width = canvas.width = canvas.offsetWidth;
       height = canvas.height = canvas.offsetHeight;
     };
@@ -113,7 +112,7 @@ export function TechSection() {
       animId = requestAnimationFrame(render);
     };
 
-    // IntersectionObserver to pause loop when off-screen (saves 100% CPU when scrolling other sections)
+    // IntersectionObserver to pause loop when off-screen
     const observer = new IntersectionObserver(
       ([entry]) => {
         isVisible = entry.isIntersecting;
@@ -129,34 +128,12 @@ export function TechSection() {
       observer.observe(sectionRef.current);
     }
 
-    // GSAP Scroll Assembly of the Node Grid
-    if (nodesGridRef.current && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      gsap.fromTo(
-        nodesGridRef.current.children,
-        { scale: 0.9, opacity: 0.2, y: 30 },
-        {
-          scale: 1,
-          opacity: 1,
-          y: 0,
-          stagger: 0.04,
-          duration: 0.8,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: 'top 80%',
-            end: 'top 30%',
-            scrub: 0.6,
-          },
-        }
-      );
-    }
-
     return () => {
       window.removeEventListener('resize', handleResize);
       observer.disconnect();
       cancelAnimationFrame(animId);
     };
-  }, []);
+  }, [sectionRef]);
 
   const filteredNodes = TECH_NODES.filter((n) =>
     selectedFilter === 'all' ? true : n.category === selectedFilter
@@ -171,22 +148,22 @@ export function TechSection() {
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-14 pb-8 border-b border-white/[0.04] gap-6">
-          <div>
+          <div className="reveal-init">
             <div className="flex items-center gap-2.5 font-mono text-xs uppercase tracking-widest text-accent-primary mb-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent-primary" />
+              <span className="w-1.5 h-1.5 rounded-full bg-accent-primary animate-pulse" />
               <span>06 // TECHNICAL ECOSYSTEM</span>
             </div>
             <h2 className="font-display font-semibold text-3xl sm:text-5xl lg:text-6xl tracking-tight text-devcore-text-primary">
               Technology is Infrastructure.
             </h2>
           </div>
-          <p className="text-devcore-text-secondary max-w-md text-sm sm:text-base font-light leading-relaxed">
+          <p className="reveal-init delay-150 text-devcore-text-secondary max-w-md text-sm sm:text-base font-light leading-relaxed">
             We don&apos;t dump random logos. We architect interconnected technical stacks chosen strictly for reliability, performance, and long-term maintainability.
           </p>
         </div>
 
         {/* Filter Category Pills */}
-        <div className="flex flex-wrap gap-2.5 mb-10">
+        <div className="reveal-init delay-150 flex flex-wrap gap-2.5 mb-10">
           {[
             { id: 'all', label: 'All Architecture' },
             { id: 'runtime', label: 'Client & Runtime' },
@@ -210,34 +187,45 @@ export function TechSection() {
         </div>
 
         {/* Interactive Constellation Matrix Canvas & Tags */}
-        <div className="relative rounded-2xl bg-surface/50 border border-white/[0.06] p-8 sm:p-12 overflow-hidden min-h-[460px]">
-          {/* Background Connecting Canvas */}
+        <div className="reveal-scale delay-200 relative rounded-2xl bg-surface/50 border border-white/[0.06] p-8 sm:p-12 overflow-hidden min-h-[460px]">
+          {/* Background Connecting Canvas (Desktop only) */}
           <canvas
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full pointer-events-none opacity-60"
+            className="hidden md:block absolute inset-0 w-full h-full pointer-events-none opacity-60"
           />
 
           {/* Foreground Interactive Node Badges */}
-          <div ref={nodesGridRef} className="relative z-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {filteredNodes.map((node) => (
-              <div
-                key={node.name}
-                onMouseEnter={() => {
-                  hoveredNodeRef.current = node.name;
-                }}
-                onMouseLeave={() => {
-                  hoveredNodeRef.current = null;
-                }}
-                className="p-4 rounded-xl border border-white/[0.04] bg-surface/70 hover:border-accent-primary/50 hover:bg-surface hover:shadow-accent-glow transition-all duration-200 cursor-default select-none will-change-transform"
-              >
-                <div className="font-mono text-[9px] uppercase tracking-widest text-accent-primary mb-1">
-                  {node.status}
+          <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {filteredNodes.map((node, idx) => {
+              const delayClass =
+                idx % 4 === 1
+                  ? 'delay-100'
+                  : idx % 4 === 2
+                  ? 'delay-150'
+                  : idx % 4 === 3
+                  ? 'delay-200'
+                  : '';
+
+              return (
+                <div
+                  key={node.name}
+                  onMouseEnter={() => {
+                    hoveredNodeRef.current = node.name;
+                  }}
+                  onMouseLeave={() => {
+                    hoveredNodeRef.current = null;
+                  }}
+                  className={`reveal-init ${delayClass} p-4 rounded-xl border border-white/[0.04] bg-surface/70 hover:border-accent-primary/50 hover:bg-surface hover:shadow-accent-glow transition-all duration-200 cursor-default select-none`}
+                >
+                  <div className="font-mono text-[9px] uppercase tracking-widest text-accent-primary mb-1">
+                    {node.status}
+                  </div>
+                  <div className="font-display font-medium text-sm sm:text-base text-devcore-text-primary">
+                    {node.name}
+                  </div>
                 </div>
-                <div className="font-display font-medium text-sm sm:text-base text-devcore-text-primary">
-                  {node.name}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* System Telemetry Footer */}

@@ -7,9 +7,10 @@ import { useFrame } from '@react-three/fiber';
 interface KineticMonolithProps {
   scrollProgress: React.MutableRefObject<number>;
   mousePos: React.MutableRefObject<{ x: number; y: number }>;
+  isMobile?: boolean;
 }
 
-export function KineticMonolith({ scrollProgress, mousePos }: KineticMonolithProps) {
+export function KineticMonolith({ scrollProgress, mousePos, isMobile = false }: KineticMonolithProps) {
   const groupRef = useRef<THREE.Group>(null);
   const primaryRingRef = useRef<THREE.Mesh>(null);
   const secondaryRingRef = useRef<THREE.Mesh>(null);
@@ -97,17 +98,29 @@ export function KineticMonolith({ scrollProgress, mousePos }: KineticMonolithPro
       {/* Inner Architectural Core (Controlled Emerald Energy, NOT a neon toy) */}
       <mesh ref={coreRef}>
         <octahedronGeometry args={[0.38, 0]} />
-        <meshPhysicalMaterial
-          color="#00F299"
-          emissive="#00b371"
-          emissiveIntensity={0.65}
-          roughness={0.15}
-          metalness={0.15}
-          transmission={0.6}
-          thickness={1.2}
-          transparent
-          opacity={0.88}
-        />
+        {isMobile ? (
+          <meshStandardMaterial
+            color="#00F299"
+            emissive="#00b371"
+            emissiveIntensity={0.8}
+            roughness={0.2}
+            metalness={0.2}
+            transparent
+            opacity={0.92}
+          />
+        ) : (
+          <meshPhysicalMaterial
+            color="#00F299"
+            emissive="#00b371"
+            emissiveIntensity={0.65}
+            roughness={0.15}
+            metalness={0.15}
+            transmission={0.6}
+            thickness={1.2}
+            transparent
+            opacity={0.88}
+          />
+        )}
       </mesh>
     </group>
   );

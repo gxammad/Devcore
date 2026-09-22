@@ -1,11 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
+import React, { useState } from 'react';
 import { LucideIcon, Cpu, Globe, Smartphone, Cloud, Layers, Terminal, ArrowUpRight } from 'lucide-react';
-
-gsap.registerPlugin(ScrollTrigger);
+import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 interface Capability {
   id: string;
@@ -83,47 +80,7 @@ const CAPABILITIES: Capability[] = [
 export function CapabilitiesSection() {
   const [activeId, setActiveId] = useState<string>('01');
   const activeCap = CAPABILITIES.find((c) => c.id === activeId) || CAPABILITIES[0];
-
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const nodesListRef = useRef<HTMLDivElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!sectionRef.current) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: 'top 80%',
-          end: 'top 25%',
-          scrub: 0.8,
-        },
-      });
-
-      if (nodesListRef.current) {
-        const nodes = nodesListRef.current.children;
-        tl.fromTo(
-          nodes,
-          { x: -35, opacity: 0.15 },
-          { x: 0, opacity: 1, stagger: 0.1, duration: 1, ease: 'power2.out' },
-          0
-        );
-      }
-
-      if (panelRef.current) {
-        tl.fromTo(
-          panelRef.current,
-          { scale: 0.94, opacity: 0.2 },
-          { scale: 1, opacity: 1, duration: 1, ease: 'power2.out' },
-          0.2
-        );
-      }
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
+  const sectionRef = useScrollReveal<HTMLDivElement>();
 
   return (
     <section
@@ -134,7 +91,7 @@ export function CapabilitiesSection() {
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 pb-8 border-b border-white/[0.04] gap-6">
-          <div>
+          <div className="reveal-init">
             <div className="flex items-center gap-2.5 font-mono text-xs uppercase tracking-widest text-accent-primary mb-3">
               <span className="w-1.5 h-1.5 rounded-full bg-accent-primary animate-pulse" />
               <span>03 // CAPABILITIES & ARCHITECTURE</span>
@@ -143,7 +100,7 @@ export function CapabilitiesSection() {
               From Ideas to Scalable Systems.
             </h2>
           </div>
-          <p className="text-devcore-text-secondary max-w-md text-sm sm:text-base font-light leading-relaxed">
+          <p className="reveal-init delay-150 text-devcore-text-secondary max-w-md text-sm sm:text-base font-light leading-relaxed">
             We don&apos;t build disposable templates. We engineer durable digital infrastructure designed to withstand enterprise load and evolve continuously.
           </p>
         </div>
@@ -151,17 +108,18 @@ export function CapabilitiesSection() {
         {/* Interactive Spatial System Map */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Interactive Capability Nodes (5 cols) */}
-          <div ref={nodesListRef} className="lg:col-span-5 flex flex-col gap-2.5 will-change-transform">
-            {CAPABILITIES.map((cap) => {
+          <div className="lg:col-span-5 flex flex-col gap-2.5">
+            {CAPABILITIES.map((cap, idx) => {
               const Icon = cap.icon;
               const isActive = cap.id === activeId;
+              const delayClass = idx === 0 ? '' : idx === 1 ? 'delay-100' : idx === 2 ? 'delay-150' : idx === 3 ? 'delay-200' : idx === 4 ? 'delay-250' : 'delay-300';
 
               return (
                 <button
                   key={cap.id}
                   onClick={() => setActiveId(cap.id)}
                   onMouseEnter={() => setActiveId(cap.id)}
-                  className={`w-full text-left p-4 sm:p-5 rounded-xl transition-all duration-300 flex items-center justify-between border cursor-pointer ${
+                  className={`reveal-init ${delayClass} w-full text-left p-4 sm:p-5 rounded-xl transition-all duration-300 flex items-center justify-between border cursor-pointer ${
                     isActive
                       ? 'bg-surface border-accent-primary/50 shadow-accent-glow translate-x-1'
                       : 'bg-surface/30 border-white/[0.04] hover:bg-surface/60 hover:border-white/[0.1]'
@@ -214,8 +172,7 @@ export function CapabilitiesSection() {
           {/* Right Column: Architectural Deep-Dive Inspection Panel (7 cols) */}
           <div className="lg:col-span-7">
             <div
-              ref={panelRef}
-              className="relative rounded-2xl bg-surface/70 border border-white/[0.06] p-8 sm:p-12 backdrop-blur-xl overflow-hidden min-h-[480px] flex flex-col justify-between will-change-transform"
+              className="reveal-scale delay-200 relative rounded-2xl bg-surface/70 border border-white/[0.06] p-8 sm:p-12 backdrop-blur-xl overflow-hidden min-h-[480px] flex flex-col justify-between"
             >
               {/* Subtle background circuit traces */}
               <div className="absolute top-0 right-0 w-80 h-80 bg-accent-primary/5 rounded-full blur-[90px] pointer-events-none" />
